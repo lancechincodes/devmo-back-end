@@ -15,7 +15,7 @@ schema
 const { createUserToken } = require('../middleware/auth')
 
 // Routes: API Endpoints Supported
-// GET all users (for testing)
+// GET all users (for testing) (Read)
 router.get('/', async (req, res, next) => {
     try {
         const users = await User.find({})
@@ -26,7 +26,7 @@ router.get('/', async (req, res, next) => {
     }
 })
 
-// GET one user
+// GET one user (Read)
 router.get('/:userId', async (req, res, next) => {
     try {
         const user = await User.findById(req.params.userId)
@@ -37,7 +37,7 @@ router.get('/:userId', async (req, res, next) => {
     }
 })
 
-// POST one user (sign up)
+// POST one user (sign up) (Post)
 router.post('/signup', async (req, res, next) => {
     try {
         // validation to check if the email already exists in the db
@@ -54,9 +54,9 @@ router.post('/signup', async (req, res, next) => {
             return res.status(400).send('Password must contain 8 characters and at least 1 uppercase and special character')
         }
 
-        // Note: Validation to check if the password and confirmation password match in the front end (confirmation password will not be stored in model)
+        // Note: Validation to check if the password and confirmation password match will be in the front-end (confirmation password will not be stored in model)
 
-        // if all validation pass, hash and salt password and confirmation password
+        // if all validation pass, the password will be hashed and salted by 10 rounds (standard)
         const password = await bcrypt.hash(req.body.password, 10)
         const newUser = await User.create({firstName: req.body.firstName, lastName: req.body.lastName, email: req.body.email, password})
         res.status(201).json(newUser)
@@ -66,7 +66,7 @@ router.post('/signup', async (req, res, next) => {
     }
 })
 
-// POST one user (sign in)
+// POST one user (sign in) (Post)
 // generate a token for authentication
 router.post('/signin', async (req, res, next) => {
     try {
