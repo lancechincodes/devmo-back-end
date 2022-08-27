@@ -18,7 +18,11 @@ const requestLogger = require('./middleware/request_logger')
 app.use(requestLogger)
 
 // Routes (controllers)
-// include controllers for models
+const usersController = require('./controllers/usersController')
+app.use('/api/users', usersController)
+
+const projectsController = require('./controllers/projectsController')
+app.use('/api/projects', projectsController)
 
 // Error handling 
 const { handleErrors } = require('./middleware/custom_errors')
