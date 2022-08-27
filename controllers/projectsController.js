@@ -32,7 +32,7 @@ router.get('/:userId', async (req, res, next) => {
 })
 
 // POST new project (Post)
-router.post('/', async (req, res, next) => {
+router.post('/', requireToken, async (req, res, next) => {
     try {
         const newProject = await Project.create(req.body)
         res.status(201).json(newProject)
@@ -43,7 +43,7 @@ router.post('/', async (req, res, next) => {
 })
 
 // PATCH project (Update)
-router.patch('/:projectId', async (req, res, next) => {
+router.patch('/:projectId', requireToken, async (req, res, next) => {
     try {
         const updatedProject = await Project.findByIdAndUpdate(req.params.projectId, req.body, {new: true})
         updatedProject ? res.status(200).json(updatedProject) : res.sendStatus(404)
@@ -53,8 +53,8 @@ router.patch('/:projectId', async (req, res, next) => {
     }
 })
 
-// DELETE project (Destroy)
-router.delete('/:projectId', async (req, res, next) => {
+// DELETE project (Delete)
+router.delete('/:projectId', requireToken, async (req, res, next) => {
     try {
         const deletedProject = await Project.findByIdAndDelete(req.params.projectId)
         

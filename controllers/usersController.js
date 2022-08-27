@@ -42,16 +42,16 @@ router.post('/signup', async (req, res, next) => {
     try {
         // validation to check if the email already exists in the db
         const emailCheck = await User.findOne({ email: req.body.email })
-        if (emailCheck) return res.status(400).send('Email is in use')
+        if (emailCheck) return res.status(400).send('Email is already in use')
         
-        // validation to check if first name, last name, email, password, and confirm password are not empty
-        if (req.body.firstName.length === 0 || req.body.lastName.length === 0 || req.body.email.length === 0 || req.body.password.length === 0 || req.body.confirmPassword.length === 0) {
+        // validation to check if first name, last name, email, and password are not empty
+        if (req.body.firstName.length === 0 || req.body.lastName.length === 0 || req.body.email.length === 0 || req.body.password.length === 0) {
             return res.status(400).send('Please fill in all fields')
         }
 
         // validation to check if the password contains 8 characters, 1 uppercase character, and 1 special character
         if (schema.validate(req.body.password) === false) {
-            return res.status(400).send('Password must contain 8 characters and at least 1 uppercase and special character')
+            return res.status(400).send('Password must contain at least 8 characters, 1 uppercase character,  and 1 special character')
         }
 
         // Note: Validation to check if the password and confirmation password match will be in the front-end (confirmation password will not be stored in model)
@@ -68,7 +68,7 @@ router.post('/signup', async (req, res, next) => {
 
 // POST one user (sign in) (Post)
 // generate a token for authentication
-router.post('/signin', async (req, res, next) => {
+router.post('/login', async (req, res, next) => {
     try {
         const user = await User.findOne({ email: req.body.email })
         if (user) {

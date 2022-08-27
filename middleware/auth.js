@@ -75,7 +75,7 @@ const createUserToken = (req, user) => {
 		!req.body.password ||
 		!bcrypt.compareSync(req.body.password, user.password)
 	) {
-		const err = new Error('The provided username or password is incorrect');
+		const err = new Error('The provided email or password is incorrect');
 		err.statusCode = 422;
 		throw err;
 	}
