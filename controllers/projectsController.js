@@ -3,16 +3,64 @@ const router = express.Router()
 // use requireToken as an inline middleware to ensure that user has a token before sending the response
 // will automatically add the user to the req object as a property or will error out
 const { requireToken } = require('../middleware/auth')
-
 const Project = require('../models/Project')
+const crypto = require('crypto')
+const sharp = require('sharp')
+
+// S3 Client - AWS SDK
+const { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
+const { getSignedUrl, S3RequestPresigner } = require("@aws-sdk/s3-request-presigner");
+
+
+// Need dotenv since we are using env variables
+const dotenv = require('dotenv')
+dotenv.config()
+
+// function that generates random hexadecimal string that will be essentially unguessable
+const randomImageName = (bytes = 32) => crypto.randomBytes(bytes).toString('hex')
+
+const bucketName = process.env.BUCKET_NAME
+const bucketRegion = process.env.BUCKET_REGION
+const accessKey = process.env.ACCESS_KEY
+const secretAccessKey = process.env.SECRET_ACCESS_KEY
+
+const s3 = new S3Client({
+    credentials: {
+        accessKeyId: accessKey,
+        secretAccessKey: secretAccessKey
+    },
+    region: bucketRegion
+})
+
+// file upload middleware
+const multer = require('multer')
+const storage = multer.memoryStorage()
+const upload = multer({ storage: storage })
+upload.single('image')
+
 
 // Routes: API Endpoints Supported
 
 // GET all projects (Read)
 router.get('/', async (req, res, next) => {
     try {
-        const projects = await Project.find({}).populate('owner')
-        projects ? res.status(200).json(projects) : res.sendStatus(404)
+        const projects = await Project.find({}) //.populate('owner')
+        if (projects) {
+            for (let project of projects) {
+                const getObjectParams = {
+                    Bucket: bucketName,
+                    Key: project.image,
+                }
+                // GetObjectCommand to create image url 
+                const command = new GetObjectCommand(getObjectParams)
+                const url = await getSignedUrl(s3, command, { expiresIn: 3600 })
+                project.imageUrl = url
+            }
+            res.status(200).json(projects) 
+        }
+        else {
+            res.sendStatus(404)
+        }
     }
     catch(err) {
         next(err)
@@ -32,9 +80,32 @@ router.get('/:userId', async (req, res, next) => {
 })
 
 // POST new project (Post)
-router.post('/', requireToken, async (req, res, next) => {
+router.post('/', upload.single('image'), async (req, res, next) => {
     try {
-        const newProject = await Project.create(req.body)
+        console.log("req.body", req.body)
+        console.log("req.file", req.file)
+
+        // resize image
+        const buffer = await sharp(req.file.buffer).resize({height: 540, width: 960}).toBuffer()
+
+        const imageName = randomImageName()
+        const params = {
+            Bucket: bucketName,
+            Key: imageName, // image name that doesn't cause collision
+            Body: buffer,
+            ContentType: req.file.mimetype,
+        }
+        const command = new PutObjectCommand(params)
+        await s3.send(command)
+
+        const newProject = await Project.create({
+            name: req.body.name,
+            description: req.body.description,
+            // url: req.body.url,
+            // owner: req.body.owner,
+            // technologies: req.body.technologies,
+            image: imageName
+        })
         res.status(201).json(newProject)
     }
     catch(err) {
@@ -56,9 +127,25 @@ router.patch('/:projectId', requireToken, async (req, res, next) => {
 // DELETE project (Delete)
 router.delete('/:projectId', requireToken, async (req, res, next) => {
     try {
-        const deletedProject = await Project.findByIdAndDelete(req.params.projectId)
-        
-        deletedProject ? res.status(200).json(deletedProject) : res.sendStatus(404)
+        // 1) find project to delete
+        const deletedProject = await Project.findById(req.params.projectId)
+        if (deletedProject) {
+            const params = {
+                Bucket: bucketName,
+                Key: project.image
+            }
+            
+            // 2) delete image from aws s3
+            const command = new DeleteObjectCommand(params)
+            await s3.send(command)
+
+            // 3) delete from mongo db
+            await Project.deleteById(req.params.projectId) 
+            res.status(200).json(deletedProject) 
+        }
+        else {
+            res.sendStatus(404)
+        }
     }
     catch(err) {
         next(err)
