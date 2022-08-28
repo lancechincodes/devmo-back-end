@@ -30,5 +30,5 @@ app.use(handleErrors)
 
 // Listener for requests and to start server
 app.listen(app.get('port'), () => {
-    console.log('On port: ' + app.get('port') + ' 🔋')
+    console.log('On port: ' + app.get('port') + ' 🎸')
 })

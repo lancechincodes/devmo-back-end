@@ -10,19 +10,19 @@ const ProjectSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    // url: {
-    //     type: String,
-    //     required: true
-    // },
-    // owner: {
-    //     type: mongoose.Schema.Types.ObjectId,
-    //     ref: 'User',
-    //     required: true
-    // },
-    // technologies: [{
-    //     type: String,
-    //     required: true
-    // }],
+    projectUrl: {
+        type: String,
+        required: true
+    },
+    owner: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
+    technologies: [{
+        type: String,
+        required: true
+    }],
     image: {
         type: String,
         required: true
