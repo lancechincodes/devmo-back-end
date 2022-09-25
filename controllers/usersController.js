@@ -51,7 +51,7 @@ router.post('/signup', async (req, res, next) => {
 
         // validation to check if the password contains 8 characters, 1 uppercase character, and 1 special character
         if (schema.validate(req.body.password) === false) {
-            return res.status(400).send('Password must contain at least 8 characters, 1 uppercase character,  and 1 special character')
+            return res.status(400).send('Password must contain at least 8 characters, 1 uppercase character, and 1 special character')
         }
 
         // Note: Validation to check if the password and confirmation password match will be in the front-end (confirmation password will not be stored in model)

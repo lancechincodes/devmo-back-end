@@ -115,8 +115,8 @@ router.post('/', upload.single('image'), async (req, res, next) => {
         const newProject = await Project.create({
             name: req.body.name,
             description: req.body.description,
-            url: req.body.url,
-            owner: req.body.owner,
+            projectUrl: req.body.projectUrl,
+            // owner: req.body.owner,
             technologies: JSON.parse(req.body.technologies), // req.body.technologies is received as a string
             image: imageName
         })
