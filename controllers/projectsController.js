@@ -116,7 +116,7 @@ router.post('/', upload.single('image'), async (req, res, next) => {
             name: req.body.name,
             description: req.body.description,
             projectUrl: req.body.projectUrl,
-            // owner: req.body.owner,
+            owner: JSON.parse(req.body.owner), // req.body.owner is received as an object
             technologies: JSON.parse(req.body.technologies), // req.body.technologies is received as a string
             image: imageName
         })

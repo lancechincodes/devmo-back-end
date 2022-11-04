@@ -15,7 +15,7 @@ const UserSchema = new mongoose.Schema({
         type: String,
         required: true,
         unique: true, // 'email' must be unique (if 2 users use the same mail, you'll get a duplicate key error)
-        validate: [ isEmail, 'Invalid email']
+        validate: [isEmail, 'Invalid email']
     },
     password: {
         type: String,
