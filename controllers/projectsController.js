@@ -3,6 +3,7 @@ const router = express.Router()
 // use requireToken as an inline middleware to ensure that user has a token before sending the response
 // will automatically add the user to the req object as a property or will error out
 const { requireToken } = require('../middleware/auth')
+const User = require('../models/User')
 const Project = require('../models/Project')
 const crypto = require('crypto') // to generate random string
 const sharp = require('sharp') // to resize images
@@ -93,6 +94,65 @@ router.get('/:userId', async (req, res, next) => {
     }
 })
 
+// GET one specific project (Read)
+router.patch('/:projectId', async (req, res, next) => {
+    try {
+        const targetedProject = await Project.findById(req.params.projectId)
+        if (targetedProject) {
+            res.status(200).json(targetedProject)
+        }
+        else {
+            res.sendStatus(404)
+        }
+    }
+    catch(err) {
+        next(err)
+    }
+})
+
+// POST (like and unlike feature using mongoDB operators) (Post)
+router.patch('/likeProject/:projectId/:userId', async (req, res, next) => {
+    try {
+        const hasLikedUser = await User.findOne({_id: req.params.userId, likedProjects: {$in: [req.params.projectId]}})
+        // if user is not in likedProjects arr (aka has not liked the project yet)
+        if (!hasLikedUser) {
+            const updatedUser = await User.findByIdAndUpdate(req.params.userId, {
+                // appends value to array
+                $push: {
+                    likedProjects: req.params.projectId
+                }
+            }, {new: true})
+
+            const updatedProject = await Project.findByIdAndUpdate(req.params.projectId, {
+                $inc: {
+                    likes: 1
+                }
+            },{new: true})
+
+            res.status(200).json(updatedUser)
+        }
+        else {
+            const updatedUser = await User.findByIdAndUpdate(req.params.userId, {
+                // removes value to array
+                $pull: {
+                    likedProjects: req.params.projectId
+                }
+            }, {new: true})
+
+            const updatedProject = await Project.findByIdAndUpdate(req.params.projectId, {
+                $inc: {
+                    likes: -1
+                }
+            }, {new: true})
+
+            res.status(200).json(updatedUser)
+        }
+    }
+    catch(err) {
+        next(err)
+    }
+})
+
 // POST new project (Post)
 router.post('/', upload.single('image'), async (req, res, next) => {
     try {
@@ -118,7 +178,8 @@ router.post('/', upload.single('image'), async (req, res, next) => {
             projectUrl: req.body.projectUrl,
             owner: JSON.parse(req.body.owner), // req.body.owner is received as an object
             technologies: JSON.parse(req.body.technologies), // req.body.technologies is received as a string
-            image: imageName
+            image: imageName,
+            githubRepo: req.body.githubRepo ? req.body.githubRepo : null
         })
         res.status(201).json(newProject)
     }
@@ -152,7 +213,8 @@ router.patch('/:projectId', upload.single('image'), async (req, res, next) => {
                 url: req.body.url,
                 owner: req.body.owner,
                 technologies: JSON.parse(req.body.technologies),
-                image: updatedProject.image
+                image: updatedProject.image,
+                githubRepo: req.body.githubRepo ? req.body.githubRepo : null,
             },
             {new: true})
         }

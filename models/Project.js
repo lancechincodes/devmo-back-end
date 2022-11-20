@@ -29,6 +29,13 @@ const ProjectSchema = new mongoose.Schema({
     },
     imageUrl: {
         type: String
+    },
+    githubRepo: {
+        type: String
+    },
+    likes: {
+        type: Number,
+        default: 0
     }
 }, {
     timestamps: true
