@@ -17,7 +17,7 @@ const ProjectSchema = new mongoose.Schema({
     owner: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        // required: true
+        required: true
     },
     technologies: [{
         type: String,
@@ -29,6 +29,13 @@ const ProjectSchema = new mongoose.Schema({
     },
     imageUrl: {
         type: String
+    },
+    githubRepo: {
+        type: String
+    },
+    likes: {
+        type: Number,
+        default: 0
     }
 }, {
     timestamps: true
