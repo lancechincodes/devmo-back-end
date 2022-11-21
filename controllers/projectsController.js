@@ -110,7 +110,7 @@ router.patch('/:projectId', async (req, res, next) => {
     }
 })
 
-// POST (like and unlike feature using mongoDB operators) (Post)
+// PATCH (like and unlike feature using mongoDB operators) (Update)
 router.patch('/likeProject/:projectId/:userId', async (req, res, next) => {
     try {
         const hasLikedUser = await User.findOne({_id: req.params.userId, likedProjects: {$in: [req.params.projectId]}})
