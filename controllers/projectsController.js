@@ -95,7 +95,7 @@ router.get('/:userId', async (req, res, next) => {
 })
 
 // GET one specific project (Read)
-router.patch('/:projectId', async (req, res, next) => {
+router.get('/:projectId', async (req, res, next) => {
     try {
         const targetedProject = await Project.findById(req.params.projectId)
         if (targetedProject) {
@@ -127,9 +127,9 @@ router.patch('/likeProject/:projectId/:userId', async (req, res, next) => {
                 $inc: {
                     likes: 1
                 }
-            },{new: true})
+            }, {new: true})
 
-            res.status(200).json(updatedUser)
+            res.status(200).json(updatedProject)
         }
         else {
             const updatedUser = await User.findByIdAndUpdate(req.params.userId, {
@@ -145,8 +145,24 @@ router.patch('/likeProject/:projectId/:userId', async (req, res, next) => {
                 }
             }, {new: true})
 
-            res.status(200).json(updatedUser)
+            res.status(200).json(updatedProject)
         }
+    }
+    catch(err) {
+        next(err)
+    }
+})
+
+// PATCH (popularity rank) 
+router.patch('/popularity', async(req, res, next) => {
+    try {
+        let rankedProjects = req.body['rankedProjects']
+        for (let i = 0; i < rankedProjects.length; i++) {
+            rankedProjects[i] = await Project.findByIdAndUpdate(rankedProjects[i]._id, {
+                popularity: i + 1
+            })
+        }
+        res.status(200).json(rankedProjects)        
     }
     catch(err) {
         next(err)
@@ -179,7 +195,8 @@ router.post('/', upload.single('image'), async (req, res, next) => {
             owner: JSON.parse(req.body.owner), // req.body.owner is received as an object
             technologies: JSON.parse(req.body.technologies), // req.body.technologies is received as a string
             image: imageName,
-            githubRepo: req.body.githubRepo ? req.body.githubRepo : null
+            githubRepo: req.body.githubRepo ? req.body.githubRepo : null,
+            popularity: req.body.popularity
         })
         res.status(201).json(newProject)
     }
