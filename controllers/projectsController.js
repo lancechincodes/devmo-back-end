@@ -208,32 +208,34 @@ router.post('/', upload.single('image'), async (req, res, next) => {
 // PATCH project (Update)
 router.patch('/:projectId', upload.single('image'), async (req, res, next) => {
     try {
-        const updatedProject = await Project.findById(req.params.projectId)
-        if (updatedProject) {
+        const targetProject = await Project.findById(req.params.projectId)
+        if (targetProject) {
             // resize image
             const buffer = await sharp(req.file.buffer).resize({height: 540, width: 960}).toBuffer()
 
             const params = {
                 Bucket: bucketName,
-                Key: updatedProject.image, // image name that matches existing to overwrite it
+                Key: targetProject.image, // image name that matches existing to overwrite it
                 Body: buffer,
                 ContentType: req.file.mimetype,
             }
             const command = new PutObjectCommand(params)
             await s3.send(command)
     
-            const newProject = await Project.findByIdAndUpdate(
+            const updatedProject = await Project.findByIdAndUpdate(
             req.params.projectId,    
             {
                 name: req.body.name,
                 description: req.body.description,
                 url: req.body.url,
-                owner: req.body.owner,
+                owner: JSON.parse(req.body.owner),
                 technologies: JSON.parse(req.body.technologies),
-                image: updatedProject.image,
+                image: targetProject.image,
                 githubRepo: req.body.githubRepo ? req.body.githubRepo : null,
+                popularity: req.body.popularity
             },
             {new: true})
+            res.status(200).json(updatedProject)
         }
         else {
             res.sendStatus(404)
