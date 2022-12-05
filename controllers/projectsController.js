@@ -232,7 +232,8 @@ router.patch('/:projectId', upload.single('image'), async (req, res, next) => {
                 technologies: JSON.parse(req.body.technologies),
                 image: targetProject.image,
                 githubRepo: req.body.githubRepo ? req.body.githubRepo : null,
-                popularity: req.body.popularity
+                popularity: req.body.popularity,
+                likes: req.body.likes
             },
             {new: true})
             res.status(200).json(updatedProject)
