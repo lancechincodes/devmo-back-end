@@ -1,4 +1,5 @@
 const mongoose = require('mongoose')
+const { isURL } = require('validator')
 
 // create the project schema
 const ProjectSchema = new mongoose.Schema({
@@ -12,7 +13,8 @@ const ProjectSchema = new mongoose.Schema({
     },
     projectUrl: {
         type: String,
-        required: true
+        required: true,
+        validate: [isURL, 'Invalid URL']
     },
     owner: {
         type: mongoose.Schema.Types.ObjectId,
@@ -31,7 +33,8 @@ const ProjectSchema = new mongoose.Schema({
         type: String
     },
     githubRepo: {
-        type: String
+        type: String,
+        validate: [isURL, 'Invalid URL']
     },
     likes: {
         type: Number,
