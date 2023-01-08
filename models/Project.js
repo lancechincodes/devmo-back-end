@@ -34,7 +34,6 @@ const ProjectSchema = new mongoose.Schema({
     },
     githubRepo: {
         type: String,
-        validate: [isURL, 'Invalid URL']
     },
     likes: {
         type: Number,
