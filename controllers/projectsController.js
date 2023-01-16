@@ -47,14 +47,18 @@ router.get('/', async (req, res, next) => {
         const projects = await Project.find({}).populate('owner')
         if (projects) {
             for (let project of projects) {
-                const getObjectParams = {
-                    Bucket: bucketName,
-                    Key: project.image,
-                }
-                // GetObjectCommand to create image url 
-                const command = new GetObjectCommand(getObjectParams)
-                const url = await getSignedUrl(s3, command, { expiresIn: 3600 })
-                project.imageUrl = url
+                // Get project image from cloudfront distribution instead (much faster)
+                project.imageUrl = "https://d1kyp7abs29pf9.cloudfront.net/" + project.image                
+                /*
+                    const getObjectParams = {
+                        Bucket: bucketName,
+                        Key: project.image,
+                    }
+                    // GetObjectCommand to create image url 
+                    const command = new GetObjectCommand(getObjectParams)
+                    const url = await getSignedUrl(s3, command, { expiresIn: 3600 })
+                    project.imageUrl = url
+                */
             }
             res.status(200).json(projects) 
         }
