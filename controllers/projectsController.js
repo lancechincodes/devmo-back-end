@@ -12,6 +12,7 @@ const sharp = require('sharp') // to resize images
 const { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 // const { getSignedUrl, S3RequestPresigner } = require("@aws-sdk/s3-request-presigner");
 const { getSignedUrl } = require('@aws-sdk/cloudfront-signer')
+const { CloudFrontClient, CreateInvalidationCommand } = require('@aws-sdk/client-cloudfront')
 
 
 // Need dotenv since we are using env variables
@@ -25,8 +26,18 @@ const bucketName = process.env.BUCKET_NAME
 const bucketRegion = process.env.BUCKET_REGION
 const accessKey = process.env.ACCESS_KEY
 const secretAccessKey = process.env.SECRET_ACCESS_KEY
+const cloudFrontDistId = process.env.CLOUD_FRONT_DIST_ID
+
 
 const s3 = new S3Client({
+    credentials: {
+        accessKeyId: accessKey,
+        secretAccessKey: secretAccessKey
+    },
+    region: bucketRegion
+})
+
+const cloudFront = new CloudFrontClient({
     credentials: {
         accessKeyId: accessKey,
         secretAccessKey: secretAccessKey
@@ -274,12 +285,26 @@ router.delete('/:projectId', async (req, res, next) => {
             }
             
             // 2) delete image from aws s3
-            const command = new DeleteObjectCommand(params)
-            await s3.send(command)
+            const s3command = new DeleteObjectCommand(params)
+            await s3.send(s3command)
 
-            // Invalidate 
+            // 3) invalidate the cloudfront cache for that target image so that when image is deleted in the front end and s3 bucket, it also becomes unavailable in cloudfront
+            const invalidationParams = {
+                DistributionId: cloudFrontDistId,
+                InvalidationBatch: {
+                    CallerReference: deletedProject.image, // unique string that identifies request being made
+                    Paths: {
+                        Quantity: 1,
+                        Items: [
+                            "/" + deletedProject.image
+                        ]
+                    }
+                }
+            }
+            const invalidationCommand = new CreateInvalidationCommand(invalidationParams)
+            await cloudFront.send(invalidationCommand)
 
-            // 3) delete from mongo db
+            // 4) delete from mongo db
             await Project.findByIdAndDelete(req.params.projectId) 
             res.status(200).json(deletedProject) 
         }
