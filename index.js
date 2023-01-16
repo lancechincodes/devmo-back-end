@@ -24,6 +24,10 @@ app.use('/api/users', usersController)
 const projectsController = require('./controllers/projectsController')
 app.use('/api/projects', projectsController)
 
+app.use("/", (req, res) => {
+    res.send('Welcome to the Devmo API page!')
+})
+
 // Error handling 
 const { handleErrors } = require('./middleware/custom_errors')
 app.use(handleErrors)
