@@ -10,10 +10,9 @@ const sharp = require('sharp') // to resize images
 
 // S3 Client - AWS SDK (communicate with s3 bucket)
 const { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
-// const { getSignedUrl, S3RequestPresigner } = require("@aws-sdk/s3-request-presigner");
-const { getSignedUrl } = require('@aws-sdk/cloudfront-signer')
+const { getSignedUrl: getS3SignedUrl, S3RequestPresigner } = require("@aws-sdk/s3-request-presigner");
+const { getSignedUrl: getCloudfrontSignedUrl } = require('@aws-sdk/cloudfront-signer')
 const { CloudFrontClient, CreateInvalidationCommand } = require('@aws-sdk/client-cloudfront')
-
 
 // Need dotenv since we are using env variables
 const dotenv = require('dotenv')
@@ -64,7 +63,7 @@ router.get('/', async (req, res, next) => {
 
                 // Sign url so that images urls cannot be accessed without a signed url and so they expire in 24 hours
                 // Image must be requested through my server now (rather than be publicly accessed if someone has the url)
-                project.imageUrl = getSignedUrl({
+                project.imageUrl = getCloudfrontSignedUrl({
                     url: "https://d1kyp7abs29pf9.cloudfront.net/" + project.image,
                     dateLessThan: new Date(Date.now() + 1000 * 60 * 60 * 24), // expires in one day
                     privateKey: process.env.CLOUDFRONT_PRIVATE_KEY,
@@ -106,7 +105,7 @@ router.get('/:userId', async (req, res, next) => {
                 }
                 // GetObjectCommand to create image url
                 const command = new GetObjectCommand(getObjectParams)
-                const url = await getSignedUrl(s3, command, { expiresIn: 3600 })
+                const url = await getS3SignedUrl(s3, command, { expiresIn: 3600 })
                 project.imageUrl = url
             }
             res.status(200).json(filteredProjectsArr)
